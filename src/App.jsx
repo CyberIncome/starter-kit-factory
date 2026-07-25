@@ -14,6 +14,7 @@ const initialKit = {
   qrUrl: 'https://example.com',
   theme: 'neighborhood',
   logoLayout: 'badge',
+  logoMark: 'paw',
   flyerOffer: 'Free meet-and-greet for new clients',
   services: [
     { name: '30-minute dog walk', duration: 'weekday walk', price: '$22' },
@@ -23,11 +24,17 @@ const initialKit = {
 };
 
 const themeMeta = {
-  neighborhood: { name: 'Friendly Neighborhood', note: 'warm, friendly, bright', colors: ['#16352D', '#E46D50', '#88A77D'] },
-  modern: { name: 'Clean Modern', note: 'calm, polished, trusted', colors: ['#182B42', '#4E8F87', '#B8D4C8'] },
-  service: { name: 'Bold Service Pro', note: 'confident, practical, clear', colors: ['#15202A', '#F0B43C', '#2B7886'] },
-  local: { name: 'Warm Local', note: 'personal, familiar, thoughtful', colors: ['#3C2C28', '#C9694D', '#7D9B88'] }
+  neighborhood: { name: 'Friendly Neighborhood', note: 'warm, familiar, cheerful', colors: ['#173B36', '#F06C50', '#87A774'] },
+  modern: { name: 'Clean Modern', note: 'calm, clear, trustworthy', colors: ['#172C45', '#4B928A', '#B7D8D1'] },
+  service: { name: 'Bold Service Pro', note: 'confident, direct, capable', colors: ['#172028', '#F2B843', '#2C7889'] },
+  local: { name: 'Warm Local', note: 'personal, grounded, thoughtful', colors: ['#442D29', '#C9684D', '#7B9A85'] },
+  adventure: { name: 'Outdoor Adventure', note: 'active, fresh, trail-ready', colors: ['#163B32', '#D36D37', '#688C49'] },
+  boutique: { name: 'Premium Boutique', note: 'soft, elevated, considered', colors: ['#372C48', '#A9677D', '#B9A58A'] }
 };
+
+const logoMarks = [
+  ['paw', 'Paw'], ['heart', 'Heart'], ['leash', 'Leash'], ['trail', 'Trail'], ['tag', 'Tag']
+];
 
 function App() {
   const [page, setPage] = useState('home');
@@ -100,7 +107,7 @@ function NewKit({ kit, setField, setKit, onGenerate, isGenerating, valid, result
   const removeService = (index) => setKit((current) => ({ ...current, services: current.services.filter((_service, serviceIndex) => serviceIndex !== index) }));
   return <div className="page-content new-kit"><div className="new-layout"><div className="form-column"><section className="section-heading"><span className="eyebrow">DOG WALKING · V1</span><h1>Build the kit from one clean order record.</h1><p>Enter exactly what the customer approved. The same details will flow into every file.</p></section>
     <FormSection number="01" title="Order & business details"><div className="form-grid"><Field label="Etsy order number" value={kit.orderNumber} placeholder="#1042" onChange={(value) => setField('orderNumber', value)} /><Field label="Business name" value={kit.businessName} onChange={(value) => setField('businessName', value)} required /><Field label="Owner name" value={kit.ownerName} onChange={(value) => setField('ownerName', value)} /><Field label="Service area" value={kit.area} onChange={(value) => setField('area', value)} /><Field label="Phone" value={kit.phone} onChange={(value) => setField('phone', value)} required /><Field label="Email" value={kit.email} onChange={(value) => setField('email', value)} required /><Field label="Website" value={kit.website} onChange={(value) => setField('website', value)} /><Field label="Website or booking link for QR" value={kit.qrUrl} onChange={(value) => setField('qrUrl', value)} /></div><Field label="Tagline" value={kit.tagline} onChange={(value) => setField('tagline', value)} /></FormSection>
-    <FormSection number="02" title="Brand direction"><div className="theme-grid">{Object.entries(themeMeta).map(([key, theme]) => <button key={key} className={`theme-card ${kit.theme === key ? 'selected' : ''}`} onClick={() => setField('theme', key)}><span className="swatches">{theme.colors.map((color) => <i key={color} style={{ background: color }} />)}</span><strong>{theme.name}</strong><small>{theme.note}</small></button>)}</div><div className="choice-row"><span>Logo layout</span>{[['badge', 'Badge'], ['stacked', 'Stacked'], ['horizontal', 'Horizontal']].map(([value, label]) => <button key={value} className={`chip ${kit.logoLayout === value ? 'chosen' : ''}`} onClick={() => setField('logoLayout', value)}>{label}</button>)}</div></FormSection>
+    <FormSection number="02" title="Brand direction"><div className="theme-grid">{Object.entries(themeMeta).map(([key, theme]) => <button key={key} className={'theme-card ' + (kit.theme === key ? 'selected' : '')} onClick={() => setField('theme', key)}><span className="swatches">{theme.colors.map((color) => <i key={color} style={{ background: color }} />)}</span><strong>{theme.name}</strong><small>{theme.note}</small></button>)}</div><div className="choice-row"><span>Logo layout</span>{[['badge', 'Badge'], ['stacked', 'Stacked'], ['horizontal', 'Horizontal']].map(([value, label]) => <button key={value} className={'chip ' + (kit.logoLayout === value ? 'chosen' : '')} onClick={() => setField('logoLayout', value)}>{label}</button>)}</div><div className="choice-row"><span>Logo mark</span>{logoMarks.map(([value, label]) => <button key={value} className={'chip ' + (kit.logoMark === value ? 'chosen' : '')} onClick={() => setField('logoMark', value)}>{label}</button>)}</div></FormSection>
     <FormSection number="03" title="Services & offer"><div className="services-editor"><div className="service-labels"><span>Service</span><span>Details</span><span>Price</span></div>{kit.services.map((service, index) => <div className="service-inputs" key={index}><input value={service.name} onChange={(event) => updateService(index, 'name', event.target.value)} placeholder="Service name" /><input value={service.duration} onChange={(event) => updateService(index, 'duration', event.target.value)} placeholder="Duration or note" /><input value={service.price} onChange={(event) => updateService(index, 'price', event.target.value)} placeholder="$0" /><button className="remove-service" onClick={() => removeService(index)} disabled={kit.services.length === 1}>×</button></div>)}<button className="add-service" onClick={addService}>+ Add another service</button></div><Field label="Flyer launch offer" value={kit.flyerOffer} onChange={(value) => setField('flyerOffer', value)} /></FormSection>
     <div className="generate-bar"><div><strong>Ready to generate?</strong><span>{valid ? 'The factory will create all nine deliverables and one delivery ZIP.' : 'Finish the required business details first.'}</span></div><button className="primary-button" onClick={onGenerate} disabled={!valid || isGenerating}>{isGenerating ? <><LoaderCircle className="spin" size={18} /> Building kit…</> : <><Sparkles size={18} /> Generate kit</>}</button></div>{message && <div className="error-note">{message}</div>}{result && <div className="success-card"><Check size={22} /><div><strong>{result.businessName} is ready to deliver.</strong><p>The ZIP and working files were saved in the generated-kit folder.</p></div><button className="secondary-button" onClick={() => window.kitFactory.openFolder(result.folder)}>Open folder</button></div>}</div><Preview kit={kit} /></div></div>;
 }

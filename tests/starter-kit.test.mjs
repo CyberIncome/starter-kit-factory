@@ -5,6 +5,21 @@ import { join } from 'node:path';
 import test from 'node:test';
 import starterKit from '../electron/starter-kit.cjs';
 
+test('supports six curated themes and deterministic logo marks', () => {
+  assert.equal(Object.keys(starterKit.themes).length, 6);
+  const valid = starterKit.validatePayload({
+    businessName: 'Trail Tails',
+    email: 'hello@trailtails.test',
+    phone: '555-555-5555',
+    area: 'Austin',
+    theme: 'adventure',
+    logoLayout: 'horizontal',
+    logoMark: 'trail',
+    services: [{ name: 'Adventure walk', price: '$35' }]
+  });
+  assert.equal(valid.valid, true);
+});
+
 test('generates the complete dog-walking starter-kit folder and delivery ZIP', async () => {
   const outputRoot = await mkdtemp(join(tmpdir(), 'starter-kit-factory-'));
   const result = await starterKit.generateStarterKit({
@@ -27,12 +42,16 @@ test('generates the complete dog-walking starter-kit folder and delivery ZIP', a
 
   assert.equal(result.documents, 9);
   await access(join(result.folder, '01-Website', 'index.html'));
-  await access(join(result.folder, '02-Logo-Pack', 'Happy-Tails-Dog-Walking-logo.svg'));
+  await access(join(result.folder, '02-Logo-Pack', 'Happy-Tails-Dog-Walking-primary.svg'));
+  await access(join(result.folder, '02-Logo-Pack', 'Happy-Tails-Dog-Walking-primary.png'));
+  await access(join(result.folder, '02-Logo-Pack', 'Happy-Tails-Dog-Walking-icon.svg'));
   await access(join(result.folder, '03-Invoice', 'invoice.pdf'));
+  await access(join(result.folder, '03-Invoice', 'invoice-a4.pdf'));
   await access(join(result.folder, '09-Launch-Checklist', 'launch-checklist.pdf'));
   await access(result.zipPath);
   assert.match(await readFile(join(result.folder, '06-Price-Sheet', 'price-sheet.pdf'), 'utf8'), /30-minute dog walk/);
   const inspection = await starterKit.inspectStarterKit(result.folder, 'Happy Tails Dog Walking');
   assert.equal(inspection.valid, true);
   assert.equal(inspection.missing.length, 0);
+  assert.equal(inspection.expected, 20);
 });

@@ -4,7 +4,7 @@ A Windows desktop application for producing personalized, ready-to-deliver busin
 
 ## Current scope
 
-Version 1 is a dog-walking starter-kit factory. It generates a local delivery folder and ZIP containing:
+Version 1.1 is a dog-walking starter-kit factory. It generates a local delivery folder and ZIP containing:
 
 1. One-page website template
 2. Logo pack
@@ -16,7 +16,17 @@ Version 1 is a dog-walking starter-kit factory. It generates a local delivery fo
 8. Flyer
 9. Launch checklist
 
-The service agreement is deliberately marked as a starting template and must receive qualified legal review before commercial use.
+Each category is personalized with the customer’s selected brand system and business details. The agreement is a practical starter agreement that you can review and refine before delivery.
+
+## V1.1 product system
+
+- Dark-only Windows dashboard designed for comfortable all-day use.
+- Six curated brand directions: Friendly Neighborhood, Clean Modern, Bold Service Pro, Warm Local, Outdoor Adventure, and Premium Boutique.
+- Five deterministic logo marks: paw, heart, leash, trail, and collar tag.
+- Scripted logo pack: primary, light, horizontal, badge, and icon versions in both SVG and transparent PNG.
+- US Letter and A4 copies of the core print templates.
+- A true 3.5 × 2 inch, two-sided business-card PDF.
+- Expanded one-page website with hero, service cards, process, local-service messaging, and QR contact section.
 
 ## How it runs
 
