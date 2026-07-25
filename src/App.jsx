@@ -129,6 +129,7 @@ function Preview({ kit }) {
       <div className="preview-list">
         <div><span>Theme</span><strong>{theme.name}</strong></div>
         <div><span>Logo system</span><strong>{layoutNames[kit.logoLayout]} · {markLabels[kit.logoMark]}</strong></div>
+        <div><span>Website</span><strong>{kit.website || 'Not added yet'}</strong></div>
         <div><span>Booking link</span><strong>{kit.qrUrl || 'Not added yet'}</strong></div>
       </div>
       <section className="preview-section">
