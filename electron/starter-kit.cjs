@@ -14,6 +14,42 @@ const esc = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({ '&': 
 const safeFolderName = (value = 'Untitled') => String(value).trim().replace(/[<>:"/\\|?*]+/g, '').replace(/\s+/g, '-').slice(0, 80) || 'Untitled';
 const niceDate = () => new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(new Date());
 
+function validatePayload(payload = {}) {
+  const errors = [];
+  const warnings = [];
+  const text = (value) => typeof value === 'string' && value.trim().length > 0;
+  const services = Array.isArray(payload.services) ? payload.services : [];
+  if (!text(payload.businessName)) errors.push({ field: 'businessName', message: 'Business name is required.' });
+  if (!text(payload.phone)) errors.push({ field: 'phone', message: 'Phone is required.' });
+  if (!text(payload.email) || !/^\S+@\S+\.\S+$/.test(payload.email.trim())) errors.push({ field: 'email', message: 'A valid email address is required.' });
+  if (!text(payload.area)) errors.push({ field: 'area', message: 'Service area is required.' });
+  if (!themes[payload.theme || 'neighborhood']) errors.push({ field: 'theme', message: 'Choose a supported theme.' });
+  if (!['badge', 'stacked', 'horizontal'].includes(payload.logoLayout || 'badge')) errors.push({ field: 'logoLayout', message: 'Choose a supported logo layout.' });
+  if (!services.some((service) => text(service.name) && text(service.price))) errors.push({ field: 'services', message: 'At least one service with a price is required.' });
+  if (payload.qrUrl && !/^https?:\/\//i.test(payload.qrUrl.trim())) errors.push({ field: 'qrUrl', message: 'QR destination must start with http:// or https://.' });
+  if (!text(payload.orderNumber)) warnings.push({ field: 'orderNumber', message: 'No order number was provided; the factory will create one locally.' });
+  if (!text(payload.website)) warnings.push({ field: 'website', message: 'No website was provided; a placeholder URL will appear in the website template.' });
+  return { valid: errors.length === 0, errors, warnings };
+}
+
+function expectedKitFiles(businessName) {
+  const root = safeFolderName(businessName);
+  return [
+    '01-Website/index.html',
+    `02-Logo-Pack/${root}-logo.svg`,
+    `02-Logo-Pack/${root}-logo-light.svg`,
+    '03-Invoice/invoice.pdf',
+    '04-Service-Agreement/service-agreement.pdf',
+    '05-Client-Intake-Form/client-intake-form.pdf',
+    '06-Price-Sheet/price-sheet.pdf',
+    '07-Business-Card/business-card.pdf',
+    '08-Flyer/flyer.pdf',
+    '09-Launch-Checklist/launch-checklist.pdf',
+    'START-HERE.txt',
+    'LICENSE.txt'
+  ];
+}
+
 function tokens(data) {
   const theme = themes[data.theme] || themes.neighborhood;
   return {
@@ -110,7 +146,13 @@ async function zipFolder(folder, zipPath) {
   });
 }
 
-async function generateStarterKit({ payload, outputRoot, renderPdf }) {
+async function generateStarterKit({ payload, outputRoot, renderPdf, createZip = true }) {
+  const validation = validatePayload(payload);
+  if (!validation.valid) {
+    const error = new Error('Kit input is not valid.');
+    error.validation = validation;
+    throw error;
+  }
   const t = tokens(payload);
   const rootName = `${safeFolderName(t.businessName)}-Starter-Kit`;
   const folder = path.join(outputRoot, rootName);
@@ -139,9 +181,23 @@ async function generateStarterKit({ payload, outputRoot, renderPdf }) {
     ['09-Launch-Checklist', 'launch-checklist.pdf', checklistDocument(t)]
   ];
   for (const [directory, filename, html] of tasks) await renderPdf(html, path.join(folder, directory, filename), 'Letter');
-  const zipPath = path.join(outputRoot, `${rootName}.zip`);
-  await zipFolder(folder, zipPath);
-  return { folder, zipPath, documents: folders.length, businessName: t.businessName };
+  const zipPath = createZip ? path.join(outputRoot, `${rootName}.zip`) : null;
+  if (zipPath) await zipFolder(folder, zipPath);
+  return { folder, zipPath, documents: folders.length, businessName: t.businessName, validation };
 }
 
-module.exports = { generateStarterKit, safeFolderName, themes };
+async function inspectStarterKit(folder, businessName) {
+  const expected = expectedKitFiles(businessName);
+  const missing = [];
+  const files = [];
+  for (const relativeFile of expected) {
+    const absoluteFile = path.join(folder, relativeFile);
+    try {
+      const info = await fs.stat(absoluteFile);
+      files.push({ file: relativeFile, bytes: info.size });
+    } catch { missing.push(relativeFile); }
+  }
+  return { valid: missing.length === 0, folder, expected: expected.length, files, missing };
+}
+
+module.exports = { generateStarterKit, inspectStarterKit, safeFolderName, themes, validatePayload, expectedKitFiles };

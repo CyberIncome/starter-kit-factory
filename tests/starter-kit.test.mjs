@@ -32,4 +32,7 @@ test('generates the complete dog-walking starter-kit folder and delivery ZIP', a
   await access(join(result.folder, '09-Launch-Checklist', 'launch-checklist.pdf'));
   await access(result.zipPath);
   assert.match(await readFile(join(result.folder, '06-Price-Sheet', 'price-sheet.pdf'), 'utf8'), /30-minute dog walk/);
+  const inspection = await starterKit.inspectStarterKit(result.folder, 'Happy Tails Dog Walking');
+  assert.equal(inspection.valid, true);
+  assert.equal(inspection.missing.length, 0);
 });

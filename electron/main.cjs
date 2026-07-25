@@ -2,9 +2,14 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { autoUpdater } = require('electron-updater');
-const { generateStarterKit, safeFolderName } = require('./starter-kit.cjs');
+const { generateStarterKit } = require('./starter-kit.cjs');
+const { readOrders, saveOrder } = require('./orders.cjs');
+const { runCli } = require('./cli.cjs');
+const { createPdfRenderer } = require('./pdf-renderer.cjs');
 
 let mainWindow;
+const cliIndex = process.argv.indexOf('--cli');
+const cliMode = cliIndex !== -1;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -46,22 +51,15 @@ function configureUpdates() {
   autoUpdater.checkForUpdates().catch(() => {});
 }
 
-function ordersFile() { return path.join(app.getPath('userData'), 'orders.json'); }
-
-async function readOrders() {
-  try { return JSON.parse(await fs.readFile(ordersFile(), 'utf8')); }
-  catch { return []; }
-}
-
-async function saveOrder(order) {
-  const kept = (await readOrders()).filter((item) => item.id !== order.id);
-  kept.unshift(order);
-  await fs.writeFile(ordersFile(), JSON.stringify(kept.slice(0, 100), null, 2));
-}
-
 app.whenReady().then(() => {
+  if (cliMode) {
+    runCli({ app, BrowserWindow, args: process.argv.slice(cliIndex + 1) })
+      .then((code) => app.exit(code))
+      .catch((error) => { console.error(JSON.stringify({ status: 'error', message: error.message })); app.exit(1); });
+    return;
+  }
   ipcMain.handle('app:info', () => ({ version: app.getVersion(), platform: process.platform }));
-  ipcMain.handle('orders:list', readOrders);
+  ipcMain.handle('orders:list', () => readOrders(app.getPath('userData')));
   ipcMain.handle('shell:open-folder', async (_event, folder) => {
     const target = folder || path.join(app.getPath('documents'), 'Starter Kit Factory', 'Generated Kits');
     await fs.mkdir(target, { recursive: true });
@@ -76,21 +74,9 @@ app.whenReady().then(() => {
     const result = await generateStarterKit({
       payload,
       outputRoot,
-      renderPdf: async (html, outputFile, pageSize) => {
-        const printWindow = new BrowserWindow({ show: false, webPreferences: { sandbox: true } });
-        try {
-          await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-          const pdf = await printWindow.webContents.printToPDF({
-            printBackground: true,
-            pageSize,
-            preferCSSPageSize: true,
-            margins: { marginType: 'none' }
-          });
-          await fs.writeFile(outputFile, pdf);
-        } finally { printWindow.destroy(); }
-      }
+      renderPdf: createPdfRenderer(BrowserWindow)
     });
-    await saveOrder({
+    await saveOrder(app.getPath('userData'), {
       id: payload.orderNumber || `${Date.now()}`,
       businessName: payload.businessName,
       industry: payload.industry,
@@ -107,4 +93,4 @@ app.whenReady().then(() => {
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('window-all-closed', () => { if (!cliMode && process.platform !== 'darwin') app.quit(); });

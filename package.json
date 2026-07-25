@@ -1,12 +1,13 @@
 {
   "name": "starter-kit-factory",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A local Windows desktop factory for personalized service-business starter kits.",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && electron .\"",
     "start": "electron .",
+    "factory": "electron . --cli",
     "build": "vite build",
     "package:win": "npm run build && electron-builder --win",
     "test": "node --test tests/**/*.test.mjs"
@@ -59,11 +60,13 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },
-    "publish": [{
-      "provider": "github",
-      "owner": "CyberIncome",
-      "repo": "starter-kit-factory",
-      "releaseType": "release"
-    }]
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "CyberIncome",
+        "repo": "starter-kit-factory",
+        "releaseType": "release"
+      }
+    ]
   }
 }

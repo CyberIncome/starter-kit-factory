@@ -1,0 +1,20 @@
+{
+  "orderNumber": "DEMO-1042",
+  "industry": "dog-walking",
+  "businessName": "Happy Tails Dog Walking",
+  "ownerName": "Jamie Smith",
+  "tagline": "Every walk, handled with heart.",
+  "phone": "(512) 555-0142",
+  "email": "hello@happytails.example",
+  "area": "Austin, Texas",
+  "website": "https://happytails.example",
+  "qrUrl": "https://happytails.example/book",
+  "theme": "neighborhood",
+  "logoLayout": "badge",
+  "flyerOffer": "Free meet-and-greet for new clients",
+  "services": [
+    { "name": "30-minute dog walk", "duration": "weekday walk", "price": "$22" },
+    { "name": "60-minute dog walk", "duration": "weekday walk", "price": "$35" },
+    { "name": "Puppy visit", "duration": "30 minutes", "price": "$28" }
+  ]
+}
