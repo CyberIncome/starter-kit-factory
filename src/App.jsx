@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Archive, ArrowRight, Check, ChevronRight, CircleHelp, FileText, FolderOpen, Home, LayoutTemplate, LoaderCircle, PackageCheck, Palette, Plus, Settings, Sparkles } from 'lucide-react';
+import { Archive, ArrowRight, Check, ChevronRight, CircleHelp, FileText, FolderOpen, Home, LoaderCircle, PackageCheck, Plus, Sparkles } from 'lucide-react';
 
 const initialKit = {
   orderNumber: '',
@@ -52,7 +52,6 @@ function App() {
 
   const setField = (field, value) => setKit((current) => ({ ...current, [field]: value }));
   const valid = kit.businessName.trim() && kit.phone.trim() && kit.email.trim() && kit.services.some((service) => service.name && service.price);
-  const displayTheme = themeMeta[kit.theme];
 
   async function generate() {
     if (!valid) { setMessage('Add a business name, phone, email, and at least one priced service before generating.'); return; }
@@ -69,24 +68,21 @@ function App() {
   const content = useMemo(() => {
     if (page === 'new') return <NewKit kit={kit} setField={setField} setKit={setKit} onGenerate={generate} isGenerating={isGenerating} valid={valid} result={result} message={message} />;
     if (page === 'orders') return <Orders orders={orders} openFolder={(folder) => window.kitFactory.openFolder(folder)} />;
-    if (page === 'templates') return <Templates onUseTheme={(theme) => { setField('theme', theme); setPage('new'); }} />;
-    if (page === 'settings') return <SettingsPanel />;
     return <HomePage orders={orders} onNew={() => setPage('new')} onOpen={(folder) => window.kitFactory.openFolder(folder)} />;
   }, [page, kit, orders, isGenerating, valid, result, message]);
 
-  return <div className="app-shell">
+  return <><div className="window-chrome" aria-hidden="true"><div className="window-drag-region"><span>STARTER KIT FACTORY</span><i>LOCAL EDITION</i></div></div><div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark">✦</div><div><strong>Starter Kit</strong><span>Factory</span></div></div>
       <nav aria-label="Main navigation">
         <NavItem active={page === 'home'} icon={<Home size={18} />} label="Home" onClick={() => setPage('home')} />
         <NavItem active={page === 'new'} icon={<Plus size={18} />} label="New kit" onClick={() => setPage('new')} />
         <NavItem active={page === 'orders'} icon={<Archive size={18} />} label="Orders" onClick={() => setPage('orders')} />
-        <NavItem active={page === 'templates'} icon={<LayoutTemplate size={18} />} label="Template library" onClick={() => setPage('templates')} />
       </nav>
-      <div className="sidebar-bottom"><NavItem active={page === 'settings'} icon={<Settings size={18} />} label="Settings & backup" onClick={() => setPage('settings')} /><div className="offline-dot"><span />Works locally</div></div>
+      <div className="sidebar-bottom"><div className="offline-dot"><span />Works locally</div></div>
     </aside>
-    <main className="content"><header className="topbar"><div><span className="topbar-kicker">OPERATIONS DESK</span><strong>{page === 'new' ? 'New customer kit' : page === 'orders' ? 'Order library' : page === 'templates' ? 'Template library' : page === 'settings' ? 'Settings & backup' : 'Good morning, ready to make something useful?'}</strong></div><button className="help-button"><CircleHelp size={17} /> Help</button></header>{content}</main>
-  </div>;
+    <main className="content"><header className="topbar"><div><span className="topbar-kicker">OPERATIONS DESK</span><strong>{page === 'new' ? 'New customer kit' : page === 'orders' ? 'Order library' : 'Good morning, ready to make something useful?'}</strong></div><button className="help-button"><CircleHelp size={17} /> Help</button></header>{content}</main>
+  </div></>;
 }
 
 function NavItem({ active, icon, label, onClick }) { return <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>{icon}<span>{label}</span></button>; }
@@ -115,12 +111,38 @@ function NewKit({ kit, setField, setKit, onGenerate, isGenerating, valid, result
 function FormSection({ number, title, children }) { return <section className="form-section"><div className="form-section-title"><span>{number}</span><h2>{title}</h2></div>{children}</section>; }
 function Field({ label, value, onChange, placeholder, required }) { return <label className="field-label"><span>{label}{required && <b> *</b>}</span><input value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} /></label>; }
 
-function Preview({ kit }) { const theme = themeMeta[kit.theme]; return <aside className="preview-column"><div className="preview-sticky"><div className="preview-heading"><span className="eyebrow">LIVE PREVIEW</span><strong>Brand system</strong></div><div className="preview-card" style={{ '--preview-ink': theme.colors[0], '--preview-accent': theme.colors[1], '--preview-leaf': theme.colors[2] }}><div className="preview-dog">♥</div><span>{kit.area}</span><h3>{kit.businessName}</h3><p>{kit.tagline}</p><div className="preview-rule" /><div className="preview-contact">{kit.phone}<br />{kit.email}</div></div><div className="preview-list"><div><span>Kit style</span><strong>{theme.name}</strong></div><div><span>Logo</span><strong>{kit.logoLayout}</strong></div><div><span>Includes</span><strong>9 essentials</strong></div></div><p className="preview-footnote">This preview is for the operator. Final customer files use the selected theme across every deliverable.</p></div></aside>; }
+function Preview({ kit }) {
+  const theme = themeMeta[kit.theme];
+  const layoutNames = { badge: 'Badge logo', stacked: 'Stacked logo', horizontal: 'Horizontal logo' };
+  const markLabels = { paw: 'Paw', heart: 'Heart', leash: 'Leash', trail: 'Trail', tag: 'Tag' };
+  const markGlyphs = { paw: '●', heart: '♥', leash: '⌁', trail: '▲', tag: '◇' };
+  const services = kit.services.filter((service) => service.name || service.price).slice(0, 4);
+  return <aside className="preview-column">
+    <div className="preview-sticky">
+      <div className="preview-heading"><span className="eyebrow">LIVE PREVIEW</span><strong>Everything updates as you type</strong></div>
+      <div className={'preview-card layout-' + kit.logoLayout} style={{ '--preview-ink': theme.colors[0], '--preview-accent': theme.colors[1], '--preview-leaf': theme.colors[2] }}>
+        <div className={'preview-mark mark-' + kit.logoMark}>{markGlyphs[kit.logoMark]}</div>
+        <div className="preview-brand-copy"><span>{kit.area || 'Service area'}</span><h3>{kit.businessName || 'Business name'}</h3><p>{kit.tagline || 'A clear, customer-friendly tagline.'}</p></div>
+        <div className="preview-rule" />
+        <div className="preview-contact"><strong>{kit.ownerName || 'Business owner'}</strong>{kit.phone || 'Phone number'}<br />{kit.email || 'Email address'}</div>
+      </div>
+      <div className="preview-list">
+        <div><span>Theme</span><strong>{theme.name}</strong></div>
+        <div><span>Logo system</span><strong>{layoutNames[kit.logoLayout]} · {markLabels[kit.logoMark]}</strong></div>
+        <div><span>Booking link</span><strong>{kit.qrUrl || 'Not added yet'}</strong></div>
+      </div>
+      <section className="preview-section">
+        <div className="preview-section-heading"><span>PRICE SHEET</span><i>{services.length} services</i></div>
+        {services.length ? <div className="preview-services">{services.map((service, index) => <div key={index}><span><strong>{service.name || 'Service name'}</strong><small>{service.duration || 'Service detail'}</small></span><b>{service.price || '$0'}</b></div>)}</div> : <p className="preview-empty">Add a service to preview the price sheet.</p>}
+      </section>
+      <section className="preview-offer">
+        <span>FLYER LAUNCH OFFER</span><strong>{kit.flyerOffer || 'Add an offer for new clients.'}</strong><div><i /><i /><i /><i /><i /><i /><i /><i /><i /></div>
+      </section>
+      <p className="preview-footnote">This preview stays visible while you work. The final ZIP includes the website, logo assets, print pieces, forms, and checklist in the selected theme.</p>
+    </div>
+  </aside>;
+}
 
 function Orders({ orders, openFolder }) { return <div className="page-content"><section className="section-heading compact"><span className="eyebrow">LOCAL ORDER HISTORY</span><h1>Every generated kit, in one place.</h1><p>Order records stay on this computer. Open a generated folder any time to review or resend an order.</p></section><section className="panel full-panel">{orders.length ? <div className="order-list">{orders.map((order) => <OrderRow key={order.id} order={order} onOpen={openFolder} />)}</div> : <div className="empty-state"><Archive size={24} /><div><strong>No kits generated yet.</strong><p>Your completed orders will appear here automatically.</p></div></div>}</section></div>; }
-
-function Templates({ onUseTheme }) { return <div className="page-content"><section className="section-heading compact"><span className="eyebrow">DOG WALKING · FIRST PACK</span><h1>Choose a cohesive style, not a blank canvas.</h1><p>Every theme includes coordinated website, logo, print, and form treatments.</p></section><div className="template-board">{Object.entries(themeMeta).map(([key, theme]) => <article className="template-showcase" key={key}><div className="template-art" style={{ '--art-ink': theme.colors[0], '--art-accent': theme.colors[1], '--art-leaf': theme.colors[2] }}><span>LOCAL<br />SERVICE</span><i /></div><div><h2>{theme.name}</h2><p>{theme.note}. Built to feel like one intentional business, not a collection of files.</p><button className="secondary-button" onClick={() => onUseTheme(key)}>Use this theme <ArrowRight size={16} /></button></div></article>)}</div></div>; }
-
-function SettingsPanel() { return <div className="page-content"><section className="section-heading compact"><span className="eyebrow">CONTROL ROOM</span><h1>Keep the factory simple and safe.</h1><p>Generated kits live in your Documents folder. Back up that folder regularly to a drive or cloud folder you trust.</p></section><section className="settings-stack"><div className="settings-card"><div><strong>Generated kit location</strong><p>Documents → Starter Kit Factory → Generated Kits</p></div><button className="secondary-button" onClick={() => window.kitFactory.openFolder('')}>Open folder</button></div><div className="settings-card"><div><strong>Updates</strong><p>Installed builds check GitHub Releases automatically after the first public release is published.</p></div><span className="status neutral">Configured</span></div><div className="settings-card"><div><strong>Legal-template review</strong><p>Keep service agreement copy attorney-reviewed and versioned before commercial use.</p></div><span className="status attention">Action needed before launch</span></div></section></div>; }
 
 export default App;
